@@ -1,0 +1,50 @@
+# Virtual environments
+.venv/
+.venv-pyspy/
+venv/
+env/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test, coverage, and analysis output
+.coverage
+.coverage.*
+coverage.json
+.hypothesis/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyrefly/
+profiles/
+coverage.xml
+htmlcov/
+
+# Python packaging and PyInstaller output
+build/
+dist/
+target/
+*.egg-info/
+.eggs/
+wheels/
+src/ntero/_native*.pyd
+src/ntero/_native*.pdb
+src/ntero/bin/
+src/ntero/pyproject.toml
+src/ntero/ThirdPartyLicenses/
+
+# Local conversion scratch files
+/texture.bmp
+/texture.tga
+
+# Tool environments
+.nox/
+.tox/
+.hatch/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

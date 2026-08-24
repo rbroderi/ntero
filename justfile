@@ -1,0 +1,47 @@
+set shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
+
+benchmark_library_root := env_var_or_default("NTERO_LIBRARY_ROOT", "C:/Users/richa/everquest/tex")
+benchmark_texture_pack := env_var_or_default("NTERO_TEXTURE_PACK", "gigapixel-bc5")
+benchmark_sound_pack := env_var_or_default("NTERO_SOUND_PACK", "quarm")
+benchmark_game_dir := env_var_or_default("NTERO_GAME_DIR", "C:/Users/Public/Daybreak Game Company/Installed Games/EverQuest Legends")
+benchmark_python := env_var_or_default("NTERO_BENCHMARK_PYTHON", "C:/Python314/python.exe")
+benchmark_pack_duration := env_var_or_default("NTERO_PACK_PROFILE_SECONDS", "120")
+benchmark_pack_rate := env_var_or_default("NTERO_PACK_PROFILE_HZ", "10")
+
+default: test
+
+test:
+    uv run pytest
+
+coverage:
+    uv run pytest --cov=ntero --cov-report=term-missing --cov-fail-under=100
+
+lint:
+    uv run pyupgrade --py314-plus --exit-zero-even-if-changed (Get-ChildItem src, tests -Recurse -Filter *.py).FullName migrate_sound_packs.py
+    uv run autopep695 format src tests migrate_sound_packs.py
+    uv run ssort src tests migrate_sound_packs.py
+    uv run basedpyright
+    uv run ruff check --fix .
+    uv run ruff format .
+    uv run ruff check .
+    uv run pyrefly check --search-path .
+
+[private]
+benchmark-environment:
+    Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue; $env:UV_PROJECT_ENVIRONMENT = ".venv-pyspy"; uv sync --python "{{ benchmark_python }}" --frozen
+
+benchmark-extract: benchmark-environment
+    New-Item -ItemType Directory -Force profiles | Out-Null
+    $env:PYTHONPATH = "$PWD/src;$PWD/.venv-pyspy/Lib/site-packages"; uvx py-spy record --format flamegraph --output profiles/benchmark-extract.svg -- "{{ benchmark_python }}" -m ntero extract --library-root "{{ benchmark_library_root }}" --texture-pack-name "{{ benchmark_texture_pack }}" --sound-pack-name "{{ benchmark_sound_pack }}" --game-dir "{{ benchmark_game_dir }}" --benchmark
+
+benchmark-update: benchmark-environment
+    New-Item -ItemType Directory -Force profiles | Out-Null
+    $env:PYTHONPATH = "$PWD/src;$PWD/.venv-pyspy/Lib/site-packages"; uvx py-spy record --format flamegraph --output profiles/benchmark-update.svg -- "{{ benchmark_python }}" -m ntero update --library-root "{{ benchmark_library_root }}" --texture-pack-name "{{ benchmark_texture_pack }}" --sound-pack-name "{{ benchmark_sound_pack }}" --game-dir "{{ benchmark_game_dir }}" --benchmark
+
+benchmark-pack: benchmark-environment
+    New-Item -ItemType Directory -Force profiles | Out-Null
+    $env:PYTHONPATH = "$PWD/src;$PWD/.venv-pyspy/Lib/site-packages"; uvx py-spy record --native --rate "{{ benchmark_pack_rate }}" --duration "{{ benchmark_pack_duration }}" --format flamegraph --output profiles/benchmark-pack.svg -- "{{ benchmark_python }}" -m ntero pack --library-root "{{ benchmark_library_root }}" --texture-pack-name "{{ benchmark_texture_pack }}" --sound-pack-name "{{ benchmark_sound_pack }}" --benchmark
+
+build:
+    cargo build --release
+    uv run pyinstaller --clean --noconfirm build.spec

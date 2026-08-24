@@ -1,0 +1,11 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.useLibraryCodeForTypes": true,
+    "cSpell.words": [
+        "BGRA",
+        "ntero",
+        "patchme",
+        "soundfile",
+        "UNORM"
+    ]
+}

@@ -1,0 +1,112 @@
+[project]
+name = "ntero"
+version = "2026.8.18"
+description = "New Texture Extractor and Replacer Overlay"
+readme = "readme.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE", "ThirdPartyLicenses/*"]
+authors = [
+    { name = "rbroderi", email = "richard.broderick@gmail.com" }
+]
+requires-python = ">=3.14"
+keywords = ["everquest", "modding", "pfs", "s3d", "textures"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Rust",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Multimedia :: Sound/Audio :: Conversion",
+]
+dependencies = [
+    "alive-progress>=3.3.0",
+    "beartype>=0.22.9",
+    "pillow>=12.3.0",
+    "soundfile>=0.14.0",
+]
+
+[project.scripts]
+ntero = "ntero.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "autopep695>=1.1.4",
+    "basedpyright>=1.39.10",
+    "hypothesis>=6.165.10",
+    "maturin>=1.15.0,<2",
+    "pyinstaller>=6.22.2",
+    "pyrefly>=1.2.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-sugar>=1.1.1",
+    "pyupgrade>=3.21.2",
+    "ruff>=0.16.4",
+    "rust-just>=1.58.0",
+    "ssort>=0.17.0",
+]
+
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "ntero._native"
+python-source = "src"
+manifest-path = "Cargo.toml"
+include = [
+    { path = "pyproject.toml", from = "out-dir", to = "ntero/" },
+    { path = "ThirdPartyLicenses/squish-LICENSE.txt", from = "out-dir", to = "ntero/" },
+    { path = "build.spec", format = "sdist" },
+    { path = "justfile", format = "sdist" },
+    { path = "tests/**/*.py", format = "sdist" },
+    { path = "ThirdPartyLicenses/**/*", format = "sdist" },
+]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # BasedPyright owns type annotations and missing type information.
+    # Any diagnostics are intentionally disabled in both tools.
+    "ANN",
+    # BasedPyright reports unused parameters, imports, locals, and expressions.
+    "ARG",
+    "B018",
+    "F401",
+    "F841",
+    # BasedPyright reports redeclarations, undefined exports/names, and unbound locals.
+    "F811",
+    "F821",
+    "F822",
+    "F823",
+    "PLC0414",
+    # Beartype resolves annotations at runtime, so type imports must remain live.
+    "TC001",
+    "TC002",
+    "TC003",
+    # This project does not require per-file copyright notices.
+    "CPY001",
+    # Resolve mutually exclusive pydocstyle pairs selected by ALL.
+    "D203",
+    "D213",
+    "T201",
+    "COM812",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "SLF001"]
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+reportAny = false
+reportExplicitAny = false
+# ruff checks this, so we don't need to duplicate it here.
+reportPrivateUsage = false
+
+[tool.coverage.run]
+omit = ["src/ntero/benchmark.py"]

@@ -1,6 +1,11 @@
 {
+    "python.defaultInterpreterPath": "${env:USERPROFILE}\\.venvs\\ntero\\Scripts\\python.exe",
     "python.analysis.typeCheckingMode": "off",
     "python.analysis.useLibraryCodeForTypes": true,
+    "terminal.integrated.env.windows": {
+        "UV_LINK_MODE": "copy",
+        "UV_PROJECT_ENVIRONMENT": "${env:USERPROFILE}\\.venvs\\ntero"
+    },
     "cSpell.words": [
         "BGRA",
         "ntero",

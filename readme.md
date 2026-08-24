@@ -23,9 +23,16 @@ To run NTERO from source, install Python 3.14 or newer and
 [uv](https://docs.astral.sh/uv/), then run these commands from the repository:
 
 ```powershell
-uv sync
+$env:UV_PROJECT_ENVIRONMENT = "$HOME\.venvs\ntero"
+$env:UV_LINK_MODE = "copy"
+uv sync --extra dev
 uv run ntero --help
 ```
+
+This keeps the virtual environment outside the OneDrive-synced project. The
+included VS Code workspace settings and `just` recipes set this path
+automatically; set the variable as shown when using `uv` directly in another
+shell.
 
 The examples below use `ntero`. Replace it with `.\ntero.exe` for the
 standalone executable or `uv run ntero` when running from source.

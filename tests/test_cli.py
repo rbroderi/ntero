@@ -12,18 +12,16 @@ from unittest.mock import patch
 import pytest
 from PIL import Image
 
-from ntero.cli import (
-    DEFAULT_WORKERS,
-    GAME_EXECUTABLE_NAME,
-    MANIFEST_NAME,
-    PACK_DEFAULT_WORKERS,
-    UPDATE_LOG_NAME,
-    _create_parser,
-    _normalize_arguments,
-    _play,
-    _project_version,
-    _update,
-)
+from ntero.cli import DEFAULT_WORKERS
+from ntero.cli import GAME_EXECUTABLE_NAME
+from ntero.cli import MANIFEST_NAME
+from ntero.cli import PACK_DEFAULT_WORKERS
+from ntero.cli import UPDATE_LOG_NAME
+from ntero.cli import _create_parser
+from ntero.cli import _normalize_arguments
+from ntero.cli import _play
+from ntero.cli import _project_version
+from ntero.cli import _update
 from ntero.pfs import PfsArchive
 from tests.test_pfs import _create_archive
 

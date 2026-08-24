@@ -1,5 +1,7 @@
 from types import TracebackType
-from typing import BinaryIO, Literal, Self
+from typing import BinaryIO
+from typing import Literal
+from typing import Self
 
 from _typeshed import FileDescriptorOrPath
 

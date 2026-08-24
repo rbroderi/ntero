@@ -7,12 +7,10 @@ from unittest.mock import patch
 import pytest
 from PIL import Image
 
-from ntero.decoder import (
-    PNG_COMPRESSION_LEVEL,
-    TextureDecodeError,
-    _decode_with_pillow,
-    decode_to_png,
-)
+from ntero.decoder import PNG_COMPRESSION_LEVEL
+from ntero.decoder import TextureDecodeError
+from ntero.decoder import _decode_with_pillow
+from ntero.decoder import decode_to_png
 
 
 def test_png_output_uses_fast_compression_level() -> None:

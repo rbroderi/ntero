@@ -4,17 +4,16 @@ import io
 import json
 import shutil
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from pathlib import PurePosixPath
 from typing import cast
 
 import soundfile
 
-from ntero.pack_state import (
-    ArchivePackState,
-    completed_pack_state,
-    file_sha256,
-    packed_output_matches,
-)
+from ntero.pack_state import ArchivePackState
+from ntero.pack_state import completed_pack_state
+from ntero.pack_state import file_sha256
+from ntero.pack_state import packed_output_matches
 from ntero.pfs import PfsArchive
 
 SOUND_MANIFEST_NAME = "sound-manifest.json"

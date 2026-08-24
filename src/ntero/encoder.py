@@ -3,7 +3,8 @@
 import struct
 from pathlib import Path
 
-from ntero.alpha import AlphaMismatchError, AlphaMode
+from ntero.alpha import AlphaMismatchError
+from ntero.alpha import AlphaMode
 
 GAME_DDS_FORMAT = "B8G8R8A8_UNORM"
 GAME_LOSSY_DDS_FORMAT = "BC3_UNORM"

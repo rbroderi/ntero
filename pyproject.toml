@@ -26,10 +26,11 @@ dependencies = [
     "beartype>=0.22.9",
     "pillow>=12.3.0",
     "soundfile>=0.14.0",
+    "swingset",
 ]
 
 [project.scripts]
-ntero = "ntero.cli:main"
+ntero = "ntero.__main__:run"
 
 [project.optional-dependencies]
 dev = [
@@ -98,6 +99,9 @@ ignore = [
     "COM812",
 ]
 
+[tool.ruff.lint.isort]
+force-single-line = true
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "SLF001"]
 
@@ -110,3 +114,6 @@ reportPrivateUsage = false
 
 [tool.coverage.run]
 omit = ["src/ntero/benchmark.py"]
+
+[tool.uv.sources]
+swingset = { git = "https://github.com/rbroderi/SWINGSet" }

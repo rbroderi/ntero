@@ -14,14 +14,12 @@ from hypothesis import strategies as st
 from PIL import Image
 
 from ntero.alpha import AlphaMismatchError
-from ntero.encoder import (
-    GAME_DDS_FORMAT,
-    GAME_LOSSY_DDS_FORMAT,
-    TextureEncodeError,
-    encode_from_png,
-    encode_png_bytes,
-    validate_game_dds,
-)
+from ntero.encoder import GAME_DDS_FORMAT
+from ntero.encoder import GAME_LOSSY_DDS_FORMAT
+from ntero.encoder import TextureEncodeError
+from ntero.encoder import encode_from_png
+from ntero.encoder import encode_png_bytes
+from ntero.encoder import validate_game_dds
 
 DDS_BITS_PER_PIXEL = 32
 EXPECTED_MIP_COUNT = 1

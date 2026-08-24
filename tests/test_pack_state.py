@@ -6,13 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ntero.pack_state import (
-    ArchivePackState,
-    completed_pack_state,
-    load_pack_state,
-    packed_output_matches,
-    write_pack_state,
-)
+from ntero.pack_state import ArchivePackState
+from ntero.pack_state import completed_pack_state
+from ntero.pack_state import load_pack_state
+from ntero.pack_state import packed_output_matches
+from ntero.pack_state import write_pack_state
 
 
 def test_pack_state_round_trip_and_output_validation() -> None:

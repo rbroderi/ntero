@@ -13,28 +13,26 @@ import pytest
 import soundfile
 
 from ntero.archive_index import load_manifest_paths
-from ntero.cli import (
-    GAME_EXECUTABLE_NAME,
-    _extract_sounds,
-    _pack_sounds,
-    _play,
-    _update_sounds,
-)
-from ntero.pack_state import PACK_STATE_NAME, ArchivePackState, load_pack_state
+from ntero.cli import GAME_EXECUTABLE_NAME
+from ntero.cli import _extract_sounds
+from ntero.cli import _pack_sounds
+from ntero.cli import _play
+from ntero.cli import _update_sounds
+from ntero.pack_state import PACK_STATE_NAME
+from ntero.pack_state import ArchivePackState
+from ntero.pack_state import load_pack_state
 from ntero.pfs import PfsArchive
-from ntero.sound import (
-    SOUND_MANIFEST_NAME,
-    SoundManifestError,
-    SoundRecord,
-    _member_path,
-    decode_wav_to_flac,
-    encode_flac_to_wav,
-    extract_sound_archive,
-    load_sound_manifest,
-    pack_sound_manifest,
-    update_sound_archive,
-    write_sound_manifest,
-)
+from ntero.sound import SOUND_MANIFEST_NAME
+from ntero.sound import SoundManifestError
+from ntero.sound import SoundRecord
+from ntero.sound import _member_path
+from ntero.sound import decode_wav_to_flac
+from ntero.sound import encode_flac_to_wav
+from ntero.sound import extract_sound_archive
+from ntero.sound import load_sound_manifest
+from ntero.sound import pack_sound_manifest
+from ntero.sound import update_sound_archive
+from ntero.sound import write_sound_manifest
 from tests.test_pfs import _create_archive
 
 EDITED_FRAME_COUNT = 3

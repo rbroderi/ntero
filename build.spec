@@ -3,8 +3,10 @@
 import shutil
 from pathlib import Path
 
-from PyInstaller.building.api import EXE, PYZ
+from PyInstaller.building.api import EXE
+from PyInstaller.building.api import PYZ
 from PyInstaller.building.build_main import Analysis
+from PyInstaller.utils.hooks import collect_submodules
 
 project_root = Path.cwd()
 package_root = project_root / "src" / "ntero"
@@ -31,7 +33,7 @@ analysis = Analysis(
             "ThirdPartyLicenses",
         ),
     ],
-    hiddenimports=["ntero._native"],
+    hiddenimports=["ntero._native", *collect_submodules("swingset.backends")],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

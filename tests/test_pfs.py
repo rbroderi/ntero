@@ -8,23 +8,24 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
 from hypothesis import strategies as st
 
-from ntero.cli import _safe_member_path, _safe_pack_root
-from ntero.pfs import (
-    FILENAME_DIRECTORY_CRC,
-    PFS_COMPRESSION_LEVEL,
-    PFS_MAGIC,
-    PFS_VERSION,
-    UINT32_MAX,
-    PfsArchive,
-    PfsEntry,
-    PfsError,
-    _compress_payload,
-    _StoredEntry,
-    filename_crc,
-)
+from ntero.cli import _safe_member_path
+from ntero.cli import _safe_pack_root
+from ntero.pfs import FILENAME_DIRECTORY_CRC
+from ntero.pfs import PFS_COMPRESSION_LEVEL
+from ntero.pfs import PFS_MAGIC
+from ntero.pfs import PFS_VERSION
+from ntero.pfs import UINT32_MAX
+from ntero.pfs import PfsArchive
+from ntero.pfs import PfsEntry
+from ntero.pfs import PfsError
+from ntero.pfs import _compress_payload
+from ntero.pfs import _StoredEntry
+from ntero.pfs import filename_crc
 
 TINY_TGA_CRC = 0x1DDE_80E1
 EXPECTED_COMPRESSED_CHUNKS = 2

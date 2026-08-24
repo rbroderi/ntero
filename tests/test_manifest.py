@@ -6,13 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ntero.manifest import (
-    ManifestError,
-    PackManifest,
-    TextureRecord,
-    load_manifest,
-    write_manifest,
-)
+from ntero.manifest import ManifestError
+from ntero.manifest import PackManifest
+from ntero.manifest import TextureRecord
+from ntero.manifest import load_manifest
+from ntero.manifest import write_manifest
 
 
 def test_manifest_round_trip() -> None:

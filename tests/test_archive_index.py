@@ -7,12 +7,10 @@ from unittest.mock import patch
 
 import pytest
 
-from ntero.archive_index import (
-    ARCHIVE_INDEX_NAME,
-    ArchiveIndexError,
-    load_manifest_paths,
-    write_archive_index,
-)
+from ntero.archive_index import ARCHIVE_INDEX_NAME
+from ntero.archive_index import ArchiveIndexError
+from ntero.archive_index import load_manifest_paths
+from ntero.archive_index import write_archive_index
 from ntero.manifest import MANIFEST_NAME
 
 

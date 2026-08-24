@@ -9,14 +9,15 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from ntero.benchmark import PACK_REPETITIONS, run_benchmark
-from ntero.manifest import MANIFEST_NAME, TextureRecord, write_manifest
-from ntero.sound import (
-    SOUND_MANIFEST_NAME,
-    SoundRecord,
-    decode_wav_to_flac,
-    write_sound_manifest,
-)
+from ntero.benchmark import PACK_REPETITIONS
+from ntero.benchmark import run_benchmark
+from ntero.manifest import MANIFEST_NAME
+from ntero.manifest import TextureRecord
+from ntero.manifest import write_manifest
+from ntero.sound import SOUND_MANIFEST_NAME
+from ntero.sound import SoundRecord
+from ntero.sound import decode_wav_to_flac
+from ntero.sound import write_sound_manifest
 from tests.test_pfs import _create_archive
 
 

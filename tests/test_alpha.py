@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ntero.alpha import AlphaMismatchError, AlphaMode, alpha_mode, validate_alpha
+from ntero.alpha import AlphaMismatchError
+from ntero.alpha import AlphaMode
+from ntero.alpha import alpha_mode
+from ntero.alpha import validate_alpha
 
 
 def _alpha_image(path: Path, mode: AlphaMode) -> None:

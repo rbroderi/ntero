@@ -9,44 +9,44 @@ import sys
 import tempfile
 import threading
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 from PIL import Image
 
 from ntero.alpha import AlphaMismatchError
-from ntero.archive_index import load_manifest_paths, write_archive_index
-from ntero.cli import (
-    GAME_EXECUTABLE_NAME,
-    MANIFEST_NAME,
-    _existing_update_record,
-    _extract,
-    _launch_game,
-    _load_existing_records,
-    _materialize_texture,
-    _missing_update_record,
-    _normalize_arguments,
-    _pack,
-    _play,
-    _populate_overlay,
-    _project_version,
-    _ProjectMetadataError,
-    _safe_member_path,
-    _safe_pack_root,
-    _sync_overlay_links,
-    _TextureContext,
-    _update,
-    _update_archive,
-    main,
-)
+from ntero.archive_index import load_manifest_paths
+from ntero.archive_index import write_archive_index
+from ntero.cli import GAME_EXECUTABLE_NAME
+from ntero.cli import MANIFEST_NAME
+from ntero.cli import _existing_update_record
+from ntero.cli import _extract
+from ntero.cli import _launch_game
+from ntero.cli import _load_existing_records
+from ntero.cli import _materialize_texture
+from ntero.cli import _missing_update_record
+from ntero.cli import _normalize_arguments
+from ntero.cli import _pack
+from ntero.cli import _play
+from ntero.cli import _populate_overlay
+from ntero.cli import _project_version
+from ntero.cli import _ProjectMetadataError
+from ntero.cli import _safe_member_path
+from ntero.cli import _safe_pack_root
+from ntero.cli import _sync_overlay_links
+from ntero.cli import _TextureContext
+from ntero.cli import _update
+from ntero.cli import _update_archive
+from ntero.cli import main
 from ntero.decoder import TextureDecodeError
 from ntero.encoder import TextureEncodeError
-from ntero.manifest import TextureRecord, load_manifest, write_manifest
-from ntero.pack_state import (
-    PACK_STATE_NAME,
-    ArchivePackState,
-    load_pack_state,
-)
+from ntero.manifest import TextureRecord
+from ntero.manifest import load_manifest
+from ntero.manifest import write_manifest
+from ntero.pack_state import PACK_STATE_NAME
+from ntero.pack_state import ArchivePackState
+from ntero.pack_state import load_pack_state
 from ntero.pfs import PfsArchive
 from tests.test_pfs import _create_archive
 

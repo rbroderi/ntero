@@ -8,38 +8,45 @@ import sys
 import tomllib
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager, contextmanager, suppress
+from contextlib import AbstractContextManager
+from contextlib import contextmanager
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
-from pathlib import Path, PurePosixPath
-from typing import Protocol, cast
+from pathlib import Path
+from pathlib import PurePosixPath
+from typing import Protocol
+from typing import cast
 
 from alive_progress import alive_bar
 
 from ntero.alpha import alpha_mode
-from ntero.archive_index import load_manifest_paths, write_archive_index
+from ntero.archive_index import load_manifest_paths
+from ntero.archive_index import write_archive_index
 from ntero.benchmark import run_benchmark
-from ntero.decoder import TextureDecodeError, decode_to_png
-from ntero.encoder import TextureEncodeError, encode_png_bytes, encoding_key
-from ntero.manifest import MANIFEST_NAME, TextureRecord, load_manifest, write_manifest
-from ntero.pack_state import (
-    PACK_STATE_NAME,
-    ArchivePackState,
-    completed_pack_state,
-    file_sha256,
-    load_pack_state,
-    packed_output_matches,
-    write_pack_state,
-)
+from ntero.decoder import TextureDecodeError
+from ntero.decoder import decode_to_png
+from ntero.encoder import TextureEncodeError
+from ntero.encoder import encode_png_bytes
+from ntero.encoder import encoding_key
+from ntero.manifest import MANIFEST_NAME
+from ntero.manifest import TextureRecord
+from ntero.manifest import load_manifest
+from ntero.manifest import write_manifest
+from ntero.pack_state import PACK_STATE_NAME
+from ntero.pack_state import ArchivePackState
+from ntero.pack_state import completed_pack_state
+from ntero.pack_state import file_sha256
+from ntero.pack_state import load_pack_state
+from ntero.pack_state import packed_output_matches
+from ntero.pack_state import write_pack_state
 from ntero.pfs import PfsArchive
 from ntero.resources import resource_path
-from ntero.sound import (
-    SOUND_MANIFEST_NAME,
-    extract_sound_archive,
-    pack_sound_manifest,
-    update_sound_archive,
-)
+from ntero.sound import SOUND_MANIFEST_NAME
+from ntero.sound import extract_sound_archive
+from ntero.sound import pack_sound_manifest
+from ntero.sound import update_sound_archive
 
 TEXTURE_EXTENSIONS = {".dds", ".bmp", ".tga"}
 GAME_EXECUTABLE_NAME = "eqgame.exe"

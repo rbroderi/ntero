@@ -13,7 +13,9 @@ NTERO supports:
 ## Install
 
 The easiest option is the standalone Windows executable. Download `ntero.exe`
-from the latest release and run it from PowerShell:
+from the latest release and open it directly to use the graphical interface.
+Running it without arguments in a terminal uses SWINGSet's terminal interface.
+Supplying arguments keeps the command-line interface:
 
 ```powershell
 .\ntero.exe --help

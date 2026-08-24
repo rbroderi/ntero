@@ -1,6 +1,5 @@
 set shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
-export UV_LINK_MODE := env_var_or_default("UV_LINK_MODE", "copy")
 export UV_PROJECT_ENVIRONMENT := env_var_or_default("UV_PROJECT_ENVIRONMENT", env_var("USERPROFILE") + "/.venvs/ntero")
 benchmark_library_root := env_var_or_default("NTERO_LIBRARY_ROOT", "C:/Users/richa/everquest/tex")
 benchmark_texture_pack := env_var_or_default("NTERO_TEXTURE_PACK", "gigapixel-bc5")
@@ -20,9 +19,9 @@ coverage:
     uv run --extra dev pytest --cov=ntero --cov-report=term-missing --cov-fail-under=100
 
 lint:
-    uv run --extra dev pyupgrade --py314-plus --exit-zero-even-if-changed (Get-ChildItem src, tests -Recurse -Filter *.py).FullName migrate_sound_packs.py
-    uv run --extra dev autopep695 format src tests migrate_sound_packs.py
-    uv run --extra dev ssort src tests migrate_sound_packs.py
+    uv run --extra dev pyupgrade --py314-plus --exit-zero-even-if-changed (Get-ChildItem src, tests -Recurse -Filter *.py).FullName
+    uv run --extra dev autopep695 format src tests
+    uv run --extra dev ssort src tests
     uv run --extra dev basedpyright
     uv run --extra dev ruff check --fix .
     uv run --extra dev ruff format .
@@ -47,4 +46,4 @@ benchmark-pack: benchmark-environment
 
 build:
     cargo build --release
-    uv run --extra dev pyinstaller --clean --noconfirm build.spec
+    $work = Join-Path $env:TEMP "ntero-pyinstaller-$PID"; uv run --extra dev pyinstaller --clean --noconfirm --workpath $work build.spec; $code = $LASTEXITCODE; Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue; exit $code

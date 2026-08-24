@@ -3,7 +3,8 @@
 import hashlib
 import json
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from pathlib import PurePosixPath
 from typing import cast
 
 PACK_STATE_NAME = "pack-state.json"

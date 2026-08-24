@@ -3,7 +3,8 @@
 import json
 import os
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from pathlib import PurePosixPath
 from typing import cast
 
 ARCHIVE_INDEX_NAME = "archive-index.json"

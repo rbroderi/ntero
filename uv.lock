@@ -963,7 +963,7 @@ wheels = [
 [[package]]
 name = "swingset"
 version = "0.9.0"
-source = { git = "https://github.com/rbroderi/SWINGSet#091a5c326562daf0f425a8d69817dfec2dcea9c1" }
+source = { git = "https://github.com/rbroderi/SWINGSet#2fcf171f8ef55cc580085ead3008e8a81db2d104" }
 dependencies = [
     { name = "beartype" },
     { name = "cairosvg" },

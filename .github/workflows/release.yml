@@ -1,0 +1,93 @@
+name: Create release
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: Release label matching the project version, for example 2026.8.18
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.label }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: windows-latest
+    env:
+      RELEASE_LABEL: ${{ inputs.label }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release label
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_LABEL -notmatch '^\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d+)?$') {
+            throw "Release label '$env:RELEASE_LABEL' is not a calendar version"
+          }
+
+          $pythonVersion = (Select-String -Path pyproject.toml -Pattern '^version = "([^"]+)"$').Matches.Groups[1].Value
+          $rustVersion = (Select-String -Path Cargo.toml -Pattern '^version = "([^"]+)"$').Matches.Groups[1].Value
+
+          if ($env:RELEASE_LABEL -ne $pythonVersion -or $env:RELEASE_LABEL -ne $rustVersion) {
+            throw "Release label '$env:RELEASE_LABEL' must match Python '$pythonVersion' and Rust '$rustVersion' versions"
+          }
+
+          $existingTag = git ls-remote --tags origin "refs/tags/$env:RELEASE_LABEL"
+          if ($existingTag) {
+            throw "Tag '$env:RELEASE_LABEL' already exists"
+          }
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.88"
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Run tests
+        run: |
+          uv run pytest
+          cargo test --all-targets --locked
+
+      - name: Build executable
+        run: |
+          cargo build --release --locked
+          uv run pyinstaller --clean --noconfirm build.spec
+
+      - name: Smoke test executable
+        run: .\dist\ntero.exe --help
+
+      - name: Create source archive
+        shell: pwsh
+        run: |
+          $archive = "dist/ntero-$env:RELEASE_LABEL-source.zip"
+          git archive --format=zip --prefix="ntero-$env:RELEASE_LABEL/" --output=$archive HEAD
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.label }}
+          name: NTERO ${{ inputs.label }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/ntero.exe
+            dist/ntero-${{ inputs.label }}-source.zip

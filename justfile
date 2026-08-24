@@ -10,7 +10,14 @@ benchmark_environment := env_var("USERPROFILE") + "/.venvs/ntero-pyspy"
 benchmark_pack_duration := env_var_or_default("NTERO_PACK_PROFILE_SECONDS", "120")
 benchmark_pack_rate := env_var_or_default("NTERO_PACK_PROFILE_HZ", "10")
 
-default: test
+_default:
+    @just --list --unsorted
+
+# Set the Python and Rust project version and refresh both lockfiles.
+version value:
+    uv version "{{ value }}" --no-sync
+    $path = Resolve-Path Cargo.toml; $content = Get-Content $path -Raw; $pattern = [regex]'(?m)^(version\s*=\s*")[^"]+(")'; if (-not $pattern.IsMatch($content)) { throw "Cargo.toml package version was not found" }; $updated = $pattern.Replace($content, { param($match) $match.Groups[1].Value + "{{ value }}" + $match.Groups[2].Value }, 1); [IO.File]::WriteAllText($path, $updated, [Text.UTF8Encoding]::new($false))
+    cargo check
 
 test:
     uv run --extra dev pytest

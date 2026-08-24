@@ -471,7 +471,7 @@ wheels = [
 
 [[package]]
 name = "ntero"
-version = "2026.8.18"
+version = "2026.8.24"
 source = { editable = "." }
 dependencies = [
     { name = "alive-progress" },

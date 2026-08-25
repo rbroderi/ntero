@@ -53,4 +53,4 @@ benchmark-pack: benchmark-environment
 
 build:
     cargo build --release
-    $work = Join-Path $env:TEMP "ntero-pyinstaller-$PID"; uv run --extra dev pyinstaller --clean --noconfirm --workpath $work build.spec; $code = $LASTEXITCODE; Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue; exit $code
+    $work = Join-Path $env:TEMP "ntero-pyinstaller-$PID"; uv run --extra build pyinstaller --clean --noconfirm --workpath $work build.spec; $code = $LASTEXITCODE; Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue; exit $code

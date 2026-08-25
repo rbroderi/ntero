@@ -59,7 +59,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install Python dependencies
-        run: uv sync --frozen --extra dev
+        run: uv sync --frozen --extra build
 
       - name: Run tests
         run: |

@@ -33,6 +33,11 @@ dependencies = [
 ntero = "ntero.__main__:run"
 
 [project.optional-dependencies]
+build = [
+    "hypothesis>=6.165.10",
+    "pyinstaller>=6.22.2",
+    "pytest>=9.1.1",
+]
 dev = [
     "autopep695>=1.1.4",
     "basedpyright>=1.39.10",

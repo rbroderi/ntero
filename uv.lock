@@ -432,6 +432,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+build = [
+    { name = "hypothesis" },
+    { name = "pyinstaller" },
+    { name = "pytest" },
+]
 dev = [
     { name = "autopep695" },
     { name = "basedpyright" },
@@ -454,11 +459,14 @@ requires-dist = [
     { name = "autopep695", marker = "extra == 'dev'", specifier = ">=1.1.4" },
     { name = "basedpyright", marker = "extra == 'dev'", specifier = ">=1.39.10" },
     { name = "beartype", specifier = ">=0.22.9" },
+    { name = "hypothesis", marker = "extra == 'build'", specifier = ">=6.165.10" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.165.10" },
     { name = "maturin", marker = "extra == 'dev'", specifier = ">=1.15.0,<2" },
     { name = "pillow", specifier = ">=12.3.0" },
+    { name = "pyinstaller", marker = "extra == 'build'", specifier = ">=6.22.2" },
     { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.22.2" },
     { name = "pyrefly", marker = "extra == 'dev'", specifier = ">=1.2.0" },
+    { name = "pytest", marker = "extra == 'build'", specifier = ">=9.1.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.1.0" },
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = ">=1.1.1" },
@@ -469,7 +477,7 @@ requires-dist = [
     { name = "ssort", marker = "extra == 'dev'", specifier = ">=0.17.0" },
     { name = "swingset", git = "https://github.com/rbroderi/SWINGSet" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["build", "dev"]
 
 [[package]]
 name = "numpy"

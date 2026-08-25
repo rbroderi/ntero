@@ -273,13 +273,13 @@ def test_sound_extract_update_and_pack_preserve_edits() -> None:  # noqa: PLR091
             _pack_sounds(options)
 
         assert rebuilds == [
-            (pack_root / "packed" / "snd1.pfs", {"attack.wav"}),
+            ((pack_root / "packed" / "snd1.pfs").resolve(), {"attack.wav"}),
             (
-                archive_root / "source.pfs",
+                (archive_root / "source.pfs").resolve(),
                 {"attack.wav", "new.wav"},
             ),
             (
-                archive_root / "source.pfs",
+                (archive_root / "source.pfs").resolve(),
                 {"attack.wav", "new.wav"},
             ),
         ]

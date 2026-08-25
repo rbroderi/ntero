@@ -124,7 +124,7 @@ def test_safe_pack_root_migrates_legacy_pack() -> None:
 
         pack_root = _safe_pack_root(library_root, "edited")
 
-        assert pack_root == library_root / "textures" / "edited"
+        assert pack_root == (library_root / "textures" / "edited").resolve()
         assert (pack_root / "marker.txt").read_text(encoding="utf-8") == "preserved"
         assert not legacy_root.exists()
 
@@ -335,13 +335,15 @@ def test_pack_rebuilds_archive_and_skips_special_records() -> None:
         assert packed.read("special.tga") == b"protected"
         assert encode.call_count == EXPECTED_SELECTIVE_ENCODINGS
         assert rebuilds == [
-            (archive_root / "source.s3d", {"edit.dds"}),
+            ((archive_root / "source.s3d").resolve(), {"edit.dds"}),
             (
-                options.library_root
-                / "textures"
-                / "edited"
-                / "packed"
-                / "textures.s3d",
+                (
+                    options.library_root
+                    / "textures"
+                    / "edited"
+                    / "packed"
+                    / "textures.s3d"
+                ).resolve(),
                 {"edit.dds"},
             ),
         ]
@@ -670,7 +672,7 @@ def test_play_requires_packed_build_and_launches_game() -> None:
             _play(options)
         launch.assert_called_once_with(
             executable,
-            options.library_root / "overlay",
+            (options.library_root / "overlay").resolve(),
         )
 
 

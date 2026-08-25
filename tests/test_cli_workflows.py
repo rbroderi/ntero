@@ -54,6 +54,7 @@ EXPECTED_ENTRYPOINT_EXIT = 7
 EXPECTED_EXTENDED_BMP_MIPS = 2
 EXPECTED_SELECTIVE_ENCODINGS = 2
 WORKER_BARRIER_TIMEOUT = 5
+SUBPROCESS_TIMEOUT = 30
 
 
 def _write_png(path: Path, color: tuple[int, int, int, int]) -> None:
@@ -830,6 +831,7 @@ for check in checks:
         check=False,
         capture_output=True,
         text=True,
+        timeout=SUBPROCESS_TIMEOUT,
     )
 
     assert result.returncode == 0, result.stderr

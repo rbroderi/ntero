@@ -61,10 +61,13 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --frozen --extra build
 
-      - name: Run tests
-        run: |
-          uv run pytest
-          cargo test --all-targets --locked
+      - name: Run Python tests
+        timeout-minutes: 10
+        run: uv run pytest -vv --durations=20
+
+      - name: Run Rust tests
+        timeout-minutes: 10
+        run: cargo test --all-targets --locked
 
       - name: Build executable
         run: |

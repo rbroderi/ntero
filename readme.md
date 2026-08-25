@@ -153,18 +153,6 @@ unchanged; packing rejects files whose profile no longer matches.
 You can pass both `--texture-pack-name` and `--sound-pack-name` to `extract`,
 `update`, `pack`, or `play` to process and use both packs together.
 
-Sound packs created before FLAC editing was introduced must be migrated once:
-
-```powershell
-uv run python migrate_sound_packs.py `
-    --library-root D:\NteroLibrary `
-    --sound-pack-name my-sounds
-```
-
-Omit `--sound-pack-name` to migrate every sound pack in the library. The script
-preserves the edited audio, replaces each editable WAV with FLAC, and upgrades
-its manifest. Current NTERO commands accept only the upgraded sound manifests.
-
 ## Options and Troubleshooting
 
 Run `ntero <command> --help` for all options. Useful options include:

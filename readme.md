@@ -47,7 +47,7 @@ to use `play`.
 ```powershell
 ntero extract `
     --game-dir "C:\Games\EverQuest" `
-    --library-root D:\NteroLibrary `
+    --library-root c:\NteroLibrary `
     --texture-pack-name my-textures
 ```
 

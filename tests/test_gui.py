@@ -1,6 +1,8 @@
 """Tests for the SWINGSet launch form."""
 
+import json
 import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -11,10 +13,150 @@ from ntero.__main__ import _launched_from_terminal
 from ntero.__main__ import run
 from ntero.gui import _arguments
 from ntero.gui import _FormValues
+from ntero.gui import _load_saved_values
 from ntero.gui import _NteroForm
+from ntero.gui import _save_values
+from ntero.gui import _SavedValues
 from ntero.gui import run_gui
 
 EXPECTED_CLI_EXIT = 4
+SAVED_WORKERS = 3
+
+
+def test_form_prefills_saved_values() -> None:
+    """Initialize every control from the previous valid submission."""
+    saved = _SavedValues(
+        command="play",
+        library_root="library",
+        game_directory="game",
+        texture_pack_name="textures",
+        sound_pack_name="sounds",
+        workers=SAVED_WORKERS,
+        benchmark=True,
+        lossless=True,
+        no_launch=True,
+    )
+
+    with patch("ntero.gui._load_saved_values", return_value=saved):
+        form = _NteroForm(Frame("NTERO"))
+
+    assert form.command.selected_item == "play"
+    assert form.library_root.text == "library"
+    assert form.game_directory.text == "game"
+    assert form.texture_pack_name.text == "textures"
+    assert form.sound_pack_name.text == "sounds"
+    assert form.workers.value == SAVED_WORKERS
+    assert form.benchmark.selected
+    assert form.lossless.selected
+    assert form.no_launch.selected
+
+
+def test_command_output_is_captured_in_output_pane() -> None:
+    """Show command stdout and stderr before reporting completion."""
+    form = _NteroForm(Frame("NTERO"))
+    with (
+        patch("ntero.gui.App.supports", return_value=False),
+        patch(
+            "ntero.gui.UIThread.invoke_later",
+            side_effect=lambda callback: callback(),
+        ),
+        patch("ntero.gui.main") as cli_main,
+    ):
+        form.build()
+        cli_main.side_effect = lambda _arguments: (
+            print("extracting archive"),
+            print("decoder note", file=sys.stderr),
+        )
+        form._execute_command("extract", ["extract"])
+
+    assert "extracting archive" in form.output.text
+    assert "decoder note" in form.output.text
+    assert "Extract complete" in form.output.text
+    assert form.status.text == "Extract complete"
+    assert form.run_button.enabled
+
+
+def test_command_failure_is_reported_in_output_pane() -> None:
+    """Leave command errors visible in the output pane."""
+    form = _NteroForm(Frame("NTERO"))
+    with (
+        patch("ntero.gui.App.supports", return_value=False),
+        patch(
+            "ntero.gui.UIThread.invoke_later",
+            side_effect=lambda callback: callback(),
+        ),
+        patch("ntero.gui.main", side_effect=ValueError("invalid archive")),
+    ):
+        form.build()
+        form._execute_command("extract", ["extract"])
+
+    assert "Failed: invalid archive" in form.output.text
+    assert form.status.text == "Failed: invalid archive"
+    assert form.run_button.enabled
+
+
+def test_output_pane_follows_new_output() -> None:
+    """Grow and scroll the output viewport as command lines accumulate."""
+    form = _NteroForm(Frame("NTERO"))
+    form._append_output("\n".join(f"line {index}" for index in range(20)))
+
+    assert form.output.height > form.output_pane.height
+    assert form.output_pane.scroll_position[1] > 0
+
+
+def test_saved_values_round_trip(tmp_path: Path) -> None:
+    """Persist the complete form state in the user settings file."""
+    values = _FormValues(
+        command="play",
+        library_root=" library ",
+        game_directory=" game ",
+        texture_pack_name="textures",
+        sound_pack_name="sounds",
+        workers=SAVED_WORKERS,
+        benchmark=True,
+        lossless=True,
+        no_launch=True,
+    )
+    settings = tmp_path / "gui-settings.json"
+
+    with patch("ntero.gui._settings_path", return_value=settings):
+        _save_values(values)
+        loaded = _load_saved_values()
+
+    assert loaded == _SavedValues(
+        command="play",
+        library_root="library",
+        game_directory="game",
+        texture_pack_name="textures",
+        sound_pack_name="sounds",
+        workers=SAVED_WORKERS,
+        benchmark=True,
+        lossless=True,
+        no_launch=True,
+    )
+    assert json.loads(settings.read_text(encoding="utf-8")) == {
+        "command": "play",
+        "libraryRoot": "library",
+        "gameDirectory": "game",
+        "texturePackName": "textures",
+        "soundPackName": "sounds",
+        "workers": SAVED_WORKERS,
+        "benchmark": True,
+        "lossless": True,
+        "noLaunch": True,
+    }
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"libraryRoot": 1}'])
+def test_saved_values_ignore_malformed_settings(tmp_path: Path, content: str) -> None:
+    """Treat corrupt or incorrectly typed settings as unset paths."""
+    settings = tmp_path / "gui-settings.json"
+    settings.write_text(content, encoding="utf-8")
+
+    with patch("ntero.gui._settings_path", return_value=settings):
+        loaded = _load_saved_values()
+
+    assert loaded == _SavedValues()
 
 
 def test_run_gui_uses_classic_theme() -> None:

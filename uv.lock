@@ -421,7 +421,7 @@ wheels = [
 
 [[package]]
 name = "ntero"
-version = "2026.8.24"
+version = "2026.8.25"
 source = { editable = "." }
 dependencies = [
     { name = "alive-progress" },
@@ -945,7 +945,7 @@ wheels = [
 [[package]]
 name = "swingset"
 version = "0.9.0"
-source = { git = "https://github.com/rbroderi/SWINGSet#84a1c4e22829834100367bcb93e647d1467822e1" }
+source = { git = "https://github.com/rbroderi/SWINGSet#f5c0fa7909e4e76ada43ddeb43b52ecd8f85f978" }
 dependencies = [
     { name = "beartype" },
     { name = "markdown-it-py" },

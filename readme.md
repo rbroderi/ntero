@@ -25,16 +25,8 @@ To run NTERO from source, install Python 3.14 or newer and
 [uv](https://docs.astral.sh/uv/), then run these commands from the repository:
 
 ```powershell
-$env:UV_PROJECT_ENVIRONMENT = "$HOME\.venvs\ntero"
-$env:UV_LINK_MODE = "copy"
-uv sync --extra dev
 uv run ntero --help
 ```
-
-This keeps the virtual environment outside the OneDrive-synced project. The
-included VS Code workspace settings and `just` recipes set this path
-automatically; set the variable as shown when using `uv` directly in another
-shell.
 
 The examples below use `ntero`. Replace it with `.\ntero.exe` for the
 standalone executable or `uv run ntero` when running from source.
@@ -55,7 +47,7 @@ to use `play`.
 ```powershell
 ntero extract `
     --game-dir "C:\Games\EverQuest" `
-    --library-root D:\NteroLibrary `
+    --library-root c:\NteroLibrary `
     --texture-pack-name my-textures
 ```
 
@@ -160,18 +152,6 @@ unchanged; packing rejects files whose profile no longer matches.
 
 You can pass both `--texture-pack-name` and `--sound-pack-name` to `extract`,
 `update`, `pack`, or `play` to process and use both packs together.
-
-Sound packs created before FLAC editing was introduced must be migrated once:
-
-```powershell
-uv run python migrate_sound_packs.py `
-    --library-root D:\NteroLibrary `
-    --sound-pack-name my-sounds
-```
-
-Omit `--sound-pack-name` to migrate every sound pack in the library. The script
-preserves the edited audio, replaces each editable WAV with FLAC, and upgrades
-its manifest. Current NTERO commands accept only the upgraded sound manifests.
 
 ## Options and Troubleshooting
 

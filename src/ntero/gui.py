@@ -2,10 +2,9 @@
 
 import json
 import os
+import subprocess
 import sys
 from collections.abc import Callable
-from contextlib import redirect_stderr
-from contextlib import redirect_stdout
 from contextlib import suppress
 from dataclasses import dataclass
 from io import TextIOBase
@@ -36,7 +35,6 @@ from swingset import Theme
 from swingset import UIThread
 
 from ntero.cli import DEFAULT_WORKERS
-from ntero.cli import main
 
 _SETTINGS_DIRECTORY = "NTERO"
 _SETTINGS_FILE = "gui-settings.json"
@@ -78,6 +76,12 @@ class _OutputWriter(TextIOBase):
 
     def isatty(self) -> bool:
         return False
+
+
+def _cli_command(arguments: list[str]) -> list[str]:
+    if getattr(sys, "frozen", False):
+        return [sys.executable, *arguments]
+    return [sys.executable, "-m", "ntero", *arguments]
 
 
 @dataclass(frozen=True, slots=True)
@@ -338,10 +342,29 @@ class _NteroForm:
         error: BaseException | None = None
         writer = _OutputWriter(self._append_output)
         try:
-            with redirect_stdout(writer), redirect_stderr(writer):
-                main(arguments)
-        except SystemExit as caught:
-            error = caught
+            environment = os.environ.copy()
+            environment["PYTHONUNBUFFERED"] = "1"
+            process = subprocess.Popen(  # noqa: S603
+                _cli_command(arguments),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+                env=environment,
+                creationflags=(
+                    subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+                ),
+            )
+            if process.stdout is None:
+                error = RuntimeError("Command output stream is unavailable")
+            else:
+                for output in iter(lambda: process.stdout.read(1), ""):
+                    writer.write(output)
+                return_code = process.wait()
+                if return_code:
+                    error = RuntimeError(f"Command exited with code {return_code}")
         except Exception as caught:  # noqa: BLE001
             error = caught
         finally:

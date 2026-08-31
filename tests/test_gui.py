@@ -2,7 +2,9 @@
 
 import json
 import sys
+from io import StringIO
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -54,21 +56,25 @@ def test_form_prefills_saved_values() -> None:
 def test_command_output_is_captured_in_output_pane() -> None:
     """Show command stdout and stderr before reporting completion."""
     form = _NteroForm(Frame("NTERO"))
+    process = SimpleNamespace(stdout=StringIO("extracting archive\ndecoder note\n"))
+
+    def wait() -> int:
+        assert "extracting archive" in form.output.text
+        return 0
+
+    process.wait = wait
     with (
         patch("ntero.gui.App.supports", return_value=False),
         patch(
             "ntero.gui.UIThread.invoke_later",
             side_effect=lambda callback: callback(),
         ),
-        patch("ntero.gui.main") as cli_main,
+        patch("ntero.gui.subprocess.Popen", return_value=process) as popen,
     ):
         form.build()
-        cli_main.side_effect = lambda _arguments: (
-            print("extracting archive"),
-            print("decoder note", file=sys.stderr),
-        )
         form._execute_command("extract", ["extract"])
 
+    popen.assert_called_once()
     assert "extracting archive" in form.output.text
     assert "decoder note" in form.output.text
     assert "Extract complete" in form.output.text
@@ -79,19 +85,22 @@ def test_command_output_is_captured_in_output_pane() -> None:
 def test_command_failure_is_reported_in_output_pane() -> None:
     """Leave command errors visible in the output pane."""
     form = _NteroForm(Frame("NTERO"))
+    process = SimpleNamespace(stdout=StringIO("invalid archive\n"))
+    process.wait = lambda: 2
     with (
         patch("ntero.gui.App.supports", return_value=False),
         patch(
             "ntero.gui.UIThread.invoke_later",
             side_effect=lambda callback: callback(),
         ),
-        patch("ntero.gui.main", side_effect=ValueError("invalid archive")),
+        patch("ntero.gui.subprocess.Popen", return_value=process),
     ):
         form.build()
         form._execute_command("extract", ["extract"])
 
-    assert "Failed: invalid archive" in form.output.text
-    assert form.status.text == "Failed: invalid archive"
+    assert "invalid archive" in form.output.text
+    assert "Failed: Command exited with code 2" in form.output.text
+    assert form.status.text == "Failed: Command exited with code 2"
     assert form.run_button.enabled
 
 

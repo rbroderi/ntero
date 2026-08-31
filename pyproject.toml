@@ -1,6 +1,6 @@
 [project]
 name = "ntero"
-version = "2026.8.25"
+version = "2026.8.31"
 description = "New Texture Extractor and Replacer Overlay"
 readme = "readme.md"
 license = "GPL-3.0-only"

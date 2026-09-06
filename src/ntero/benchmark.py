@@ -458,6 +458,7 @@ def _benchmark_texture_pack_manifest(
             editable,
             name,
             lossy=lossy,
+            source_dds=source.read(name),
             expected_alpha=record.alpha,
         )
     if replacements:

@@ -294,7 +294,7 @@ def test_pack_rebuilds_archive_and_skips_special_records() -> None:
             expected_alpha: str | None = None,
         ) -> bytes:
             assert lossy
-            assert source_dds is None
+            assert source_dds == b"old"
             assert expected_alpha is None
             return b"new"
 

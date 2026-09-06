@@ -8,7 +8,7 @@ from ntero.alpha import AlphaMode
 
 GAME_DDS_FORMAT = "B8G8R8A8_UNORM"
 GAME_LOSSY_DDS_FORMAT = "BC3_UNORM"
-ENCODING_POLICY_VERSION = "native-uniform-dds-mip4-v6"
+ENCODING_POLICY_VERSION = "native-uniform-dds-mip4-v7"
 _LEGACY_DDS_FORMATS = {
     b"DXT1": "BC1_UNORM",
     b"DXT3": "BC2_UNORM",
@@ -17,6 +17,7 @@ _LEGACY_DDS_FORMATS = {
 _LEGACY_FOUR_CC = {value: key for key, value in _LEGACY_DDS_FORMATS.items()}
 _DDS_PIXEL_FORMAT_FLAGS = 0x41
 _DDS_COLOR_MASKS = (0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+_BMP_HEIGHT_OFFSET = 22
 DDS_HEADER_BYTES = 128
 DDS_LEGACY_HEADER_SIZE = 124
 DDS_PIXEL_FORMAT_OFFSET = 76
@@ -128,18 +129,23 @@ def encode_png_bytes(
     expected_alpha: AlphaMode | None = None,
 ) -> bytes:
     """Encode an edited PNG to an in-memory packed texture payload."""
-    del source_dds
     extension = Path(original_name).suffix.lower()
     if extension not in {".dds", ".bmp", ".tga"}:
         msg = f"Unsupported packed texture extension: {extension}"
         raise TextureEncodeError(msg)
     dds_format = GAME_LOSSY_DDS_FORMAT if lossy else GAME_DDS_FORMAT
+    flip_vertical = (
+        source_dds is not None
+        and len(source_dds) >= _BMP_HEIGHT_OFFSET + 4
+        and source_dds.startswith(b"BM")
+        and struct.unpack_from("<i", source_dds, _BMP_HEIGHT_OFFSET)[0] > 0
+    )
     try:
         payload = _encode_with_native(
             source,
             dds_format,
             expected_alpha,
-            flip_vertical=extension == ".bmp",
+            flip_vertical=flip_vertical,
         )
     except ValueError as error:
         raise AlphaMismatchError(str(error)) from error

@@ -479,11 +479,8 @@ def _pack_manifest(
         if baseline_state is not None
         else set(input_hashes)
     )
-    baseline = (
-        PfsArchive(destination)
-        if baseline_state is not None
-        else PfsArchive(source_path)
-    )
+    source = PfsArchive(source_path)
+    baseline = PfsArchive(destination) if baseline_state is not None else source
     replacements: dict[str, bytes] = {}
     for record in manifest.textures:
         name = record.name
@@ -498,6 +495,7 @@ def _pack_manifest(
             editable,
             name,
             lossy=context.lossy,
+            source_dds=source.read(name),
             expected_alpha=expected_alpha,
         )
     baseline.rebuild(destination, replacements)

@@ -109,7 +109,7 @@ def test_pack_benchmark_encodes_and_rebuilds_without_persistent_writes() -> None
             expected_alpha: str | None = None,
         ) -> bytes:
             assert lossy
-            assert source_dds is None
+            assert source_dds == b"original"
             assert expected_alpha == "graded"
             return b"encoded"
 

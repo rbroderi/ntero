@@ -64,6 +64,29 @@ def test_pillow_decodes_supported_textures(
             ]
 
 
+def test_indexed_bmp_magenta_color_key_becomes_png_alpha() -> None:
+    """Convert EverQuest's indexed BMP magenta color key to binary alpha."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "source.bmp"
+        destination = root / "editable.png"
+        image = Image.new("P", (3, 1))
+        image.putpalette(
+            [255, 0, 255, 10, 20, 30, 255, 0, 255] + [0, 0, 0] * 253,
+        )
+        image.putdata([0, 1, 2])
+        image.save(source, format="BMP")
+
+        decode_to_png(source, destination)
+
+        with Image.open(destination) as decoded:
+            assert list(decoded.convert("RGBA").get_flattened_data()) == [
+                (255, 0, 255, 0),
+                (10, 20, 30, 255),
+                (255, 0, 255, 0),
+            ]
+
+
 def test_decode_failure_removes_partial_output_and_reports_pillow_error() -> None:
     """Remove partial output and report Pillow decode failures."""
     with tempfile.TemporaryDirectory() as temporary:

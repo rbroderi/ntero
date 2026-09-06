@@ -3,7 +3,6 @@
 import binascii
 import struct
 import tempfile
-import unittest
 import zlib
 from pathlib import Path
 from unittest.mock import patch
@@ -84,135 +83,150 @@ def _split_rgba_png(
     return _png(width, height, rows)
 
 
-class EncoderTests(unittest.TestCase):
-    """Verify lossless and lossy DDS output accepted by The Game."""
+def test_encodes_maximum_quality_game_dds() -> None:
+    """Encode legacy BGRA without unusably small mip levels."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "edited.png"
+        destination = root / "texture.dds"
+        source.write_bytes(
+            _split_rgba_png(
+                8,
+                4,
+                top=(10, 20, 30, 40),
+                bottom=(50, 60, 70, 80),
+            ),
+        )
 
-    def test_encodes_maximum_quality_game_dds(self) -> None:
-        """Encode legacy BGRA without unusably small mip levels."""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "edited.png"
-            destination = root / "texture.dds"
-            source.write_bytes(
-                _split_rgba_png(
-                    8,
-                    4,
-                    top=(10, 20, 30, 40),
-                    bottom=(50, 60, 70, 80),
-                ),
-            )
+        encoded = encode_from_png(source, destination, "texture.dds")
+        payload = destination.read_bytes()
 
-            encoded = encode_from_png(source, destination, "texture.dds")
-            payload = destination.read_bytes()
+        assert encoded == payload
+        assert GAME_DDS_FORMAT == "B8G8R8A8_UNORM"
+        assert payload[:4] == b"DDS "
+        assert payload[84:88] == b"\0\0\0\0"
+        assert struct.unpack_from("<I", payload, 88)[0] == DDS_BITS_PER_PIXEL
+        assert struct.unpack_from("<IIII", payload, 92) == LEGACY_BGRA_MASKS
+        assert struct.unpack_from("<I", payload, 28)[0] == EXPECTED_MIP_COUNT
+        assert struct.unpack_from("<I", payload, 20)[0] == 8 * 4
+        assert payload[128:132] == bytes((30, 20, 10, 40))
 
-            assert encoded == payload
-            assert GAME_DDS_FORMAT == "B8G8R8A8_UNORM"
-            assert payload[:4] == b"DDS "
-            assert payload[84:88] == b"\0\0\0\0"
-            assert struct.unpack_from("<I", payload, 88)[0] == DDS_BITS_PER_PIXEL
-            assert struct.unpack_from("<IIII", payload, 92) == LEGACY_BGRA_MASKS
-            assert struct.unpack_from("<I", payload, 28)[0] == EXPECTED_MIP_COUNT
-            assert struct.unpack_from("<I", payload, 20)[0] == 8 * 4
-            assert payload[128:132] == bytes((30, 20, 10, 40))
 
-    def test_encodes_without_writing_an_intermediate_file(self) -> None:
-        """Return a valid DDS payload entirely in memory."""
-        with tempfile.TemporaryDirectory() as temporary:
-            source = Path(temporary) / "edited.png"
-            source.write_bytes(_rgba_png(4, 4, (10, 20, 30, 255)))
+def test_encodes_without_writing_an_intermediate_file() -> None:
+    """Return a valid DDS payload entirely in memory."""
+    with tempfile.TemporaryDirectory() as temporary:
+        source = Path(temporary) / "edited.png"
+        source.write_bytes(_rgba_png(4, 4, (10, 20, 30, 255)))
 
-            payload = encode_png_bytes(source, "texture.dds", lossy=True)
+        payload = encode_png_bytes(source, "texture.dds", lossy=True)
 
-            assert payload[:4] == b"DDS "
-            assert payload[84:88] == b"DXT5"
-            assert list(Path(temporary).iterdir()) == [source]
+        assert payload[:4] == b"DDS "
+        assert payload[84:88] == b"DXT5"
+        assert list(Path(temporary).iterdir()) == [source]
 
-    def test_encodes_best_legacy_lossy_game_dds(self) -> None:
-        """Encode legacy BC3/DXT5 without unusably small mip levels."""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "edited.png"
-            destination = root / "texture.dds"
-            source.write_bytes(_rgba_png(8, 4, (10, 20, 30, 40)))
 
-            encode_from_png(source, destination, "texture.dds", lossy=True)
-            payload = destination.read_bytes()
+def test_encodes_best_legacy_lossy_game_dds() -> None:
+    """Encode legacy BC3/DXT5 without unusably small mip levels."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "edited.png"
+        destination = root / "texture.dds"
+        source.write_bytes(_rgba_png(8, 4, (10, 20, 30, 40)))
 
-            assert GAME_LOSSY_DDS_FORMAT == "BC3_UNORM"
-            assert payload[:4] == b"DDS "
-            assert payload[84:88] == b"DXT5"
-            assert struct.unpack_from("<I", payload, 28)[0] == EXPECTED_MIP_COUNT
-            validate_game_dds(payload, lossy=True)
+        encode_from_png(source, destination, "texture.dds", lossy=True)
+        payload = destination.read_bytes()
 
-    def test_default_mode_ignores_original_dxt_format(self) -> None:
-        """Encode DXT sources as uncompressed BGRA in default mode."""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "edited.png"
-            destination = root / "texture.dds"
-            source.write_bytes(_rgba_png(8, 4, (10, 20, 30, 255)))
-            original = bytearray(_dds_payload(8, 4))
-            struct.pack_into("<II", original, 76, 32, 4)
-            original[84:88] = b"DXT1"
+        assert GAME_LOSSY_DDS_FORMAT == "BC3_UNORM"
+        assert payload[:4] == b"DDS "
+        assert payload[84:88] == b"DXT5"
+        assert struct.unpack_from("<I", payload, 28)[0] == EXPECTED_MIP_COUNT
+        validate_game_dds(payload, lossy=True)
 
-            encode_from_png(
-                source,
-                destination,
-                "texture.dds",
-                source_dds=bytes(original),
-            )
 
-            assert destination.read_bytes()[84:88] == b"\0\0\0\0"
+def test_default_mode_ignores_original_dxt_format() -> None:
+    """Encode DXT sources as uncompressed BGRA in default mode."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "edited.png"
+        destination = root / "texture.dds"
+        source.write_bytes(_rgba_png(8, 4, (10, 20, 30, 255)))
+        original = bytearray(_dds_payload(8, 4))
+        struct.pack_into("<II", original, 76, 32, 4)
+        original[84:88] = b"DXT1"
 
-    def test_logical_bmp_uses_requested_encoding_mode(self) -> None:
-        """Write DDS payloads for logical BMP members in both modes."""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "texture.png"
-            source.write_bytes(_rgba_png(8, 8, (10, 20, 30, 255)))
+        encode_from_png(
+            source,
+            destination,
+            "texture.dds",
+            source_dds=bytes(original),
+        )
 
-            lossless = encode_from_png(source, root / "lossless.bmp", "lossless.bmp")
-            lossy = encode_from_png(
-                source,
-                root / "lossy.bmp",
-                "lossy.bmp",
-                lossy=True,
-            )
+        assert destination.read_bytes()[84:88] == b"\0\0\0\0"
 
-            assert lossless[:4] == b"DDS "
-            assert lossless[84:88] == b"\0\0\0\0"
-            assert lossy[:4] == b"DDS "
-            assert lossy[84:88] == b"DXT5"
 
-    def test_logical_bmp_flips_rows_when_converted_to_dds(self) -> None:
-        """Preserve The Game's bottom-up BMP orientation in DDS replacements."""
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            source = root / "texture.png"
-            source.write_bytes(
-                _split_rgba_png(
-                    4,
-                    4,
-                    top=(10, 20, 30, 255),
-                    bottom=(50, 60, 70, 255),
-                ),
-            )
+def test_logical_bmp_uses_requested_encoding_mode() -> None:
+    """Write DDS payloads for logical BMP members in both modes."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "texture.png"
+        source.write_bytes(_rgba_png(8, 8, (10, 20, 30, 255)))
 
-            bmp_payload = encode_png_bytes(source, "texture.bmp")
-            dds_payload = encode_png_bytes(source, "texture.dds")
+        lossless = encode_from_png(source, root / "lossless.bmp", "lossless.bmp")
+        lossy = encode_from_png(
+            source,
+            root / "lossy.bmp",
+            "lossy.bmp",
+            lossy=True,
+        )
 
-            assert bmp_payload[128:132] == bytes((70, 60, 50, 255))
-            assert dds_payload[128:132] == bytes((30, 20, 10, 255))
+        assert lossless[:4] == b"DDS "
+        assert lossless[84:88] == b"\0\0\0\0"
+        assert lossy[:4] == b"DDS "
+        assert lossy[84:88] == b"DXT5"
 
-    def test_rejects_dx10_header(self) -> None:
-        """Reject DDS DX10 headers unsupported by the legacy client."""
-        payload = bytearray(148)
-        payload[:4] = b"DDS "
-        struct.pack_into("<I", payload, 4, 124)
-        payload[84:88] = b"DX10"
 
-        with pytest.raises(TextureEncodeError, match="DX10"):
-            validate_game_dds(bytes(payload))
+@pytest.mark.parametrize(
+    ("source_payload", "expected_pixel"),
+    [
+        (b"BM" + bytes(20) + struct.pack("<i", 4), bytes((70, 60, 50, 255))),
+        (b"DDS " + bytes(24), bytes((30, 20, 10, 255))),
+    ],
+    ids=["bottom-up-bmp", "dds-named-bmp"],
+)
+def test_logical_bmp_uses_source_payload_orientation(
+    source_payload: bytes,
+    expected_pixel: bytes,
+) -> None:
+    """Compensate for real bottom-up BMPs, not DDS files named BMP."""
+    with tempfile.TemporaryDirectory() as temporary:
+        source = Path(temporary) / "texture.png"
+        source.write_bytes(
+            _split_rgba_png(
+                4,
+                4,
+                top=(10, 20, 30, 255),
+                bottom=(50, 60, 70, 255),
+            ),
+        )
+
+        payload = encode_png_bytes(
+            source,
+            "texture.bmp",
+            source_dds=source_payload,
+        )
+
+        assert payload[128:132] == expected_pixel
+
+
+def test_rejects_dx10_header() -> None:
+    """Reject DDS DX10 headers unsupported by the legacy client."""
+    payload = bytearray(148)
+    payload[:4] = b"DDS "
+    struct.pack_into("<I", payload, 4, 124)
+    payload[84:88] = b"DX10"
+
+    with pytest.raises(TextureEncodeError, match="DX10"):
+        validate_game_dds(bytes(payload))
 
 
 @given(

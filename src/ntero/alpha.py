@@ -30,9 +30,8 @@ def alpha_mode(path: Path) -> AlphaMode:
     return "graded"
 
 
-def validate_alpha(path: Path, expected: AlphaMode) -> None:
-    """Require an edited image to preserve its recorded alpha capability."""
-    actual = alpha_mode(path)
+def alpha_is_compatible(expected: AlphaMode, actual: AlphaMode) -> bool:
+    """Return whether an actual alpha mode preserves the expected capability."""
     compatible: dict[AlphaMode, set[AlphaMode]] = {
         "none": {"none", "opaque"},
         "opaque": {"none", "opaque"},
@@ -40,6 +39,12 @@ def validate_alpha(path: Path, expected: AlphaMode) -> None:
         "binary": {"binary", "graded"},
         "graded": {"graded"},
     }
-    if actual not in compatible[expected]:
+    return actual in compatible[expected]
+
+
+def validate_alpha(path: Path, expected: AlphaMode) -> None:
+    """Require an edited image to preserve its recorded alpha capability."""
+    actual = alpha_mode(path)
+    if not alpha_is_compatible(expected, actual):
         msg = f"Editable texture alpha changed from {expected} to {actual}: {path}"
         raise AlphaMismatchError(msg)

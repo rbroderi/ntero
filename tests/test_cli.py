@@ -3,6 +3,7 @@
 import argparse
 import io
 import json
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -17,6 +18,7 @@ from ntero.cli import GAME_EXECUTABLE_NAME
 from ntero.cli import MANIFEST_NAME
 from ntero.cli import PACK_DEFAULT_WORKERS
 from ntero.cli import UPDATE_LOG_NAME
+from ntero.cli import _archive_progress
 from ntero.cli import _create_parser
 from ntero.cli import _normalize_arguments
 from ntero.cli import _play
@@ -28,6 +30,20 @@ from tests.test_pfs import _create_archive
 ARGPARSE_ERROR_EXIT = 2
 CONFIGURED_WORKERS = 2
 EXPECTED_UPDATE_ADDITIONS = 2
+
+
+def test_gui_archive_progress_flushes_plain_text() -> None:
+    """Emit intermediate GUI progress without terminal control sequences."""
+    output = io.StringIO()
+    with (
+        patch.dict(os.environ, {"NTERO_GUI_PROGRESS": "1"}),
+        redirect_stdout(output),
+        _archive_progress(2, "Packing PFS sounds") as progress,
+    ):
+        progress.text = "snd1.pfs"
+        progress()
+
+    assert output.getvalue() == "Packing PFS sounds: 1/2 snd1.pfs\n"
 
 
 def _write_png(path: Path, color: tuple[int, int, int, int]) -> bytes:

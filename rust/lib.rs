@@ -259,10 +259,11 @@ fn encode_bytes(
     source: &Path,
     format_name: &str,
     expected_alpha: Option<&str>,
+    flip_vertical: bool,
 ) -> Result<Vec<u8>, EncodeError> {
     let decoded = image::open(source).map_err(|error| EncodeError::Message(error.to_string()))?;
     let has_alpha = decoded.color().has_alpha();
-    let image = decoded.to_rgba8();
+    let mut image = decoded.to_rgba8();
     let actual_alpha = alpha_mode(&image, has_alpha);
     if let Some(expected) = expected_alpha
         && !alpha_is_compatible(expected, actual_alpha)
@@ -271,6 +272,9 @@ fn encode_bytes(
             expected: expected.to_owned(),
             actual: actual_alpha,
         });
+    }
+    if flip_vertical {
+        image::imageops::flip_vertical_in_place(&mut image);
     }
     let mut output = Cursor::new(Vec::new());
     match DdsFormat::parse(format_name) {
@@ -293,8 +297,9 @@ fn encode(
     destination: &Path,
     format_name: &str,
     expected_alpha: Option<&str>,
+    flip_vertical: bool,
 ) -> Result<(), EncodeError> {
-    let encoded = encode_bytes(source, format_name, expected_alpha)?;
+    let encoded = encode_bytes(source, format_name, expected_alpha, flip_vertical)?;
     if let Some(parent) = destination.parent() {
         std::fs::create_dir_all(parent).map_err(|error| EncodeError::Message(error.to_string()))?;
     }
@@ -317,13 +322,14 @@ fn encode_error(error: EncodeError, source: &str) -> PyErr {
 }
 
 #[pyfunction]
-#[pyo3(signature = (source, destination, format_name, expected_alpha=None))]
+#[pyo3(signature = (source, destination, format_name, expected_alpha=None, flip_vertical=false))]
 fn encode_png(
     py: Python<'_>,
     source: &str,
     destination: &str,
     format_name: &str,
     expected_alpha: Option<&str>,
+    flip_vertical: bool,
 ) -> PyResult<()> {
     let source = source.to_owned();
     let destination = destination.to_owned();
@@ -335,24 +341,33 @@ fn encode_png(
             Path::new(&destination),
             &format_name,
             expected_alpha.as_deref(),
+            flip_vertical,
         )
     })
     .map_err(|error| encode_error(error, &source))
 }
 
 #[pyfunction]
-#[pyo3(signature = (source, format_name, expected_alpha=None))]
+#[pyo3(signature = (source, format_name, expected_alpha=None, flip_vertical=false))]
 fn encode_png_bytes(
     py: Python<'_>,
     source: &str,
     format_name: &str,
     expected_alpha: Option<&str>,
+    flip_vertical: bool,
 ) -> PyResult<Py<PyBytes>> {
     let source = source.to_owned();
     let format_name = format_name.to_owned();
     let expected_alpha = expected_alpha.map(str::to_owned);
     let encoded = py
-        .detach(|| encode_bytes(Path::new(&source), &format_name, expected_alpha.as_deref()))
+        .detach(|| {
+            encode_bytes(
+                Path::new(&source),
+                &format_name,
+                expected_alpha.as_deref(),
+                flip_vertical,
+            )
+        })
         .map_err(|error| encode_error(error, &source))?;
     Ok(PyBytes::new(py, &encoded).unbind())
 }

@@ -488,6 +488,58 @@ def test_pack_rejects_lost_graded_alpha() -> None:
         with pytest.raises(AlphaMismatchError, match="graded to none"):
             _pack(options)
 
+
+@pytest.mark.parametrize("actual", ["none", "graded"])
+def test_pack_unifies_alpha_for_shared_editable_texture(actual: str) -> None:
+    """Accept any source alpha contract when archive members share one PNG."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        archive_root = root / "shared"
+        editable = archive_root / "textures" / "texture.png"
+        source = archive_root / "source.s3d"
+        editable.parent.mkdir(parents=True)
+        if actual == "none":
+            Image.new("RGB", (1, 1), (10, 20, 30)).save(editable, format="PNG")
+        else:
+            _write_png(editable, (10, 20, 30, 128))
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes(
+            _create_archive({"texture.bmp": b"bmp", "texture.dds": b"dds"}),
+        )
+        write_manifest(
+            archive_root / MANIFEST_NAME,
+            "shared.s3d",
+            [
+                TextureRecord(
+                    name="texture.bmp",
+                    editable="textures/texture.png",
+                    special=False,
+                    alpha="none",
+                ),
+                TextureRecord(
+                    name="texture.dds",
+                    editable="textures/texture.png",
+                    special=False,
+                    alpha="graded",
+                ),
+            ],
+        )
+        write_archive_index(root, [Path("shared") / MANIFEST_NAME], MANIFEST_NAME)
+        options = argparse.Namespace(
+            library_root=root.parent,
+            texture_pack_name=root.name,
+            lossless=False,
+            workers=1,
+        )
+
+        with patch("ntero.cli.encode_png_bytes", return_value=b"encoded") as encode:
+            _pack(options)
+
+        assert [call.kwargs["expected_alpha"] for call in encode.call_args_list] == [
+            actual,
+            actual,
+        ]
+
         assert not (archive_root / "encoded" / "edit.dds").exists()
         assert not (
             options.library_root / "textures" / "edited" / "packed" / "textures.s3d"

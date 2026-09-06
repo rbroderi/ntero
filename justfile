@@ -13,10 +13,9 @@ benchmark_pack_rate := env_var_or_default("NTERO_PACK_PROFILE_HZ", "10")
 _default:
     @just --list --unsorted
 
-# Set the Python and Rust project version and refresh both lockfiles.
+# Set the public calendar version and its SemVer-compatible Cargo equivalent.
 version value:
-    uv version "{{ value }}" --no-sync
-    $path = Resolve-Path Cargo.toml; $content = Get-Content $path -Raw; $pattern = [regex]'(?m)^(version\s*=\s*")[^"]+(")'; if (-not $pattern.IsMatch($content)) { throw "Cargo.toml package version was not found" }; $updated = $pattern.Replace($content, { param($match) $match.Groups[1].Value + "{{ value }}" + $match.Groups[2].Value }, 1); [IO.File]::WriteAllText($path, $updated, [Text.UTF8Encoding]::new($false))
+    $publicVersion = "{{ value }}"; $match = [regex]::Match($publicVersion, '^(\d{4})\.(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?$'); if (-not $match.Success) { throw "Version '$publicVersion' must be YYYY.M.D or YYYY.M.D.REVISION" }; $revision = if ($match.Groups[4].Success) { [int]$match.Groups[4].Value } else { 0 }; $cargoPatch = ([int]$match.Groups[3].Value * 100) + $revision; $cargoVersion = "$($match.Groups[1].Value).$($match.Groups[2].Value).$cargoPatch"; uv version $publicVersion --no-sync; Copy-Item pyproject.toml src/ntero/pyproject.toml -Force; $path = Resolve-Path Cargo.toml; $content = Get-Content $path -Raw; $pattern = [regex]'(?m)^(version\s*=\s*")[^"]+(")'; if (-not $pattern.IsMatch($content)) { throw "Cargo.toml package version was not found" }; $updated = $pattern.Replace($content, { param($versionMatch) $versionMatch.Groups[1].Value + $cargoVersion + $versionMatch.Groups[2].Value }, 1); [IO.File]::WriteAllText($path, $updated, [Text.UTF8Encoding]::new($false)); Write-Output "Public version: $publicVersion; Cargo version: $cargoVersion"
     cargo check
 
 test:

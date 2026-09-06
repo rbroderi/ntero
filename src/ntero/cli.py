@@ -21,6 +21,8 @@ from typing import cast
 
 from alive_progress import alive_bar
 
+from ntero.alpha import AlphaMode
+from ntero.alpha import alpha_is_compatible
 from ntero.alpha import alpha_mode
 from ntero.archive_index import load_manifest_paths
 from ntero.archive_index import write_archive_index
@@ -67,6 +69,23 @@ class _Progress(Protocol):
     def __call__(self, count: int = 1, *, skipped: bool = False) -> None: ...
 
 
+class _GuiProgress:
+    def __init__(self, total: int, title: str) -> None:
+        self.total = total
+        self.title = title
+        self.current = 0
+        self.text = ""
+
+    def __call__(self, count: int = 1, *, skipped: bool = False) -> None:
+        self.current += count
+        detail = f" {self.text}" if self.text else ""
+        suffix = " (skipped)" if skipped else ""
+        sys.stdout.write(
+            f"{self.title}: {self.current}/{self.total}{detail}{suffix}\n",
+        )
+        sys.stdout.flush()
+
+
 @dataclass(frozen=True, slots=True)
 class _TextureContext:
     archive: PfsArchive
@@ -88,6 +107,9 @@ def _write_status(message: str) -> None:
 
 @contextmanager
 def _archive_progress(total: int, title: str) -> Generator[_Progress]:
+    if os.environ.get("NTERO_GUI_PROGRESS") == "1":
+        yield _GuiProgress(total, title)
+        return
     progress_context = cast(
         "AbstractContextManager[_Progress]",
         alive_bar(total, title=title, enrich_print=False),
@@ -378,10 +400,11 @@ def _texture_pack_inputs(
     records: list[TextureRecord],
     archive_root: Path,
     context: _PackContext,
-) -> tuple[dict[str, str], dict[str, Path]]:
+) -> tuple[dict[str, str], dict[str, Path], dict[str, set[AlphaMode]]]:
     """Fingerprint editable texture inputs."""
     input_hashes: dict[str, str] = {}
     editable_paths: dict[str, Path] = {}
+    alpha_contracts: dict[str, set[AlphaMode]] = {}
     encoding = encoding_key(lossy=context.lossy)
     for record in records:
         if record.special:
@@ -393,7 +416,25 @@ def _texture_pack_inputs(
             raise FileNotFoundError(msg)
         editable_paths[name] = editable
         input_hashes[name] = f"{file_sha256(editable)}:{encoding}"
-    return input_hashes, editable_paths
+        editable_key = record.editable.casefold()
+        contracts = alpha_contracts.setdefault(editable_key, set())
+        if record.alpha is not None:
+            contracts.add(record.alpha)
+    return input_hashes, editable_paths, alpha_contracts
+
+
+def _effective_alpha_contract(
+    path: Path,
+    contracts: set[AlphaMode],
+) -> AlphaMode | None:
+    if not contracts:
+        return None
+    if len(contracts) == 1:
+        return next(iter(contracts))
+    actual = alpha_mode(path)
+    if any(alpha_is_compatible(expected, actual) for expected in contracts):
+        return actual
+    return min(contracts)
 
 
 def _pack_manifest(
@@ -409,7 +450,7 @@ def _pack_manifest(
     previous_state = context.pack_states.get(state_key)
     source_sha256 = file_sha256(source_path)
     manifest_sha256 = file_sha256(manifest_path)
-    input_hashes, editable_paths = _texture_pack_inputs(
+    input_hashes, editable_paths, alpha_contracts = _texture_pack_inputs(
         manifest.textures,
         archive_root,
         context,
@@ -448,11 +489,16 @@ def _pack_manifest(
         name = record.name
         if record.special or name not in changed_names:
             continue
+        editable = editable_paths[name]
+        expected_alpha = _effective_alpha_contract(
+            editable,
+            alpha_contracts[record.editable.casefold()],
+        )
         replacements[name] = encode_png_bytes(
-            editable_paths[name],
+            editable,
             name,
             lossy=context.lossy,
-            expected_alpha=record.alpha,
+            expected_alpha=expected_alpha,
         )
     baseline.rebuild(destination, replacements)
     state = completed_pack_state(

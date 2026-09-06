@@ -8,7 +8,7 @@ from ntero.alpha import AlphaMode
 
 GAME_DDS_FORMAT = "B8G8R8A8_UNORM"
 GAME_LOSSY_DDS_FORMAT = "BC3_UNORM"
-ENCODING_POLICY_VERSION = "native-uniform-dds-mip4-v5"
+ENCODING_POLICY_VERSION = "native-uniform-dds-mip4-v6"
 _LEGACY_DDS_FORMATS = {
     b"DXT1": "BC1_UNORM",
     b"DXT3": "BC2_UNORM",
@@ -51,6 +51,8 @@ def _encode_with_native(
     source: Path,
     format_name: str,
     expected_alpha: AlphaMode | None,
+    *,
+    flip_vertical: bool,
 ) -> bytes:
     from ntero import _native  # noqa: PLC0415
 
@@ -58,6 +60,7 @@ def _encode_with_native(
         str(source.resolve()),
         format_name,
         expected_alpha,
+        flip_vertical,
     )
 
 
@@ -132,7 +135,12 @@ def encode_png_bytes(
         raise TextureEncodeError(msg)
     dds_format = GAME_LOSSY_DDS_FORMAT if lossy else GAME_DDS_FORMAT
     try:
-        payload = _encode_with_native(source, dds_format, expected_alpha)
+        payload = _encode_with_native(
+            source,
+            dds_format,
+            expected_alpha,
+            flip_vertical=extension == ".bmp",
+        )
     except ValueError as error:
         raise AlphaMismatchError(str(error)) from error
     except RuntimeError as error:

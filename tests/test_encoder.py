@@ -184,6 +184,26 @@ class EncoderTests(unittest.TestCase):
             assert lossy[:4] == b"DDS "
             assert lossy[84:88] == b"DXT5"
 
+    def test_logical_bmp_flips_rows_when_converted_to_dds(self) -> None:
+        """Preserve The Game's bottom-up BMP orientation in DDS replacements."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "texture.png"
+            source.write_bytes(
+                _split_rgba_png(
+                    4,
+                    4,
+                    top=(10, 20, 30, 255),
+                    bottom=(50, 60, 70, 255),
+                ),
+            )
+
+            bmp_payload = encode_png_bytes(source, "texture.bmp")
+            dds_payload = encode_png_bytes(source, "texture.dds")
+
+            assert bmp_payload[128:132] == bytes((70, 60, 50, 255))
+            assert dds_payload[128:132] == bytes((30, 20, 10, 255))
+
     def test_rejects_dx10_header(self) -> None:
         """Reject DDS DX10 headers unsupported by the legacy client."""
         payload = bytearray(148)

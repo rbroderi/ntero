@@ -343,6 +343,8 @@ class _NteroForm:
         writer = _OutputWriter(self._append_output)
         try:
             environment = os.environ.copy()
+            environment["NTERO_GUI_PROGRESS"] = "1"
+            environment["PYTHONIOENCODING"] = "utf-8"
             environment["PYTHONUNBUFFERED"] = "1"
             process = subprocess.Popen(  # noqa: S603
                 _cli_command(arguments),

@@ -31,15 +31,19 @@ jobs:
       - name: Validate release label
         shell: pwsh
         run: |
-          if ($env:RELEASE_LABEL -notmatch '^\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d+)?$') {
+          $versionMatch = [regex]::Match($env:RELEASE_LABEL, '^(\d{4})\.(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?$')
+          if (-not $versionMatch.Success) {
             throw "Release label '$env:RELEASE_LABEL' is not a calendar version"
           }
 
           $pythonVersion = (Select-String -Path pyproject.toml -Pattern '^version = "([^"]+)"$').Matches.Groups[1].Value
           $rustVersion = (Select-String -Path Cargo.toml -Pattern '^version = "([^"]+)"$').Matches.Groups[1].Value
+          $revision = if ($versionMatch.Groups[4].Success) { [int]$versionMatch.Groups[4].Value } else { 0 }
+          $cargoPatch = ([int]$versionMatch.Groups[3].Value * 100) + $revision
+          $expectedRustVersion = "$($versionMatch.Groups[1].Value).$($versionMatch.Groups[2].Value).$cargoPatch"
 
-          if ($env:RELEASE_LABEL -ne $pythonVersion -or $env:RELEASE_LABEL -ne $rustVersion) {
-            throw "Release label '$env:RELEASE_LABEL' must match Python '$pythonVersion' and Rust '$rustVersion' versions"
+          if ($env:RELEASE_LABEL -ne $pythonVersion -or $expectedRustVersion -ne $rustVersion) {
+            throw "Release label '$env:RELEASE_LABEL' requires Python '$env:RELEASE_LABEL' and Rust '$expectedRustVersion'; found Python '$pythonVersion' and Rust '$rustVersion'"
           }
 
           $existingTag = git ls-remote --tags origin "refs/tags/$env:RELEASE_LABEL"

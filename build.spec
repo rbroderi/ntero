@@ -42,10 +42,12 @@ analysis = Analysis(
     optimize=0,
 )
 python_archive = PYZ(analysis.pure)
+python_options = [("X utf8", None, "OPTION"), ("u", None, "OPTION")]
 
 executable = EXE(
     python_archive,
     analysis.scripts,
+    python_options,
     analysis.binaries,
     analysis.datas,
     [],

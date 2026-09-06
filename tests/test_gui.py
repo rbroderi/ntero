@@ -75,6 +75,10 @@ def test_command_output_is_captured_in_output_pane() -> None:
         form._execute_command("extract", ["extract"])
 
     popen.assert_called_once()
+    environment = popen.call_args.kwargs["env"]
+    assert environment["NTERO_GUI_PROGRESS"] == "1"
+    assert environment["PYTHONIOENCODING"] == "utf-8"
+    assert environment["PYTHONUNBUFFERED"] == "1"
     assert "extracting archive" in form.output.text
     assert "decoder note" in form.output.text
     assert "Extract complete" in form.output.text

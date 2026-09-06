@@ -150,7 +150,7 @@ dependencies = [
 
 [[package]]
 name = "ntero-native"
-version = "2026.9.601"
+version = "2026.9.604"
 dependencies = [
  "image",
  "pyo3",

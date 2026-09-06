@@ -12,6 +12,7 @@ from contextlib import AbstractContextManager
 from contextlib import contextmanager
 from contextlib import suppress
 from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -49,6 +50,8 @@ from ntero.sound import SOUND_MANIFEST_NAME
 from ntero.sound import extract_sound_archive
 from ntero.sound import pack_sound_manifest
 from ntero.sound import update_sound_archive
+from ntero.wld import WldError
+from ntero.wld import masked_palette_indices
 
 TEXTURE_EXTENSIONS = {".dds", ".bmp", ".tga"}
 GAME_EXECUTABLE_NAME = "eqgame.exe"
@@ -91,6 +94,7 @@ class _TextureContext:
     archive: PfsArchive
     archive_root: Path
     working: Path
+    masked_palette_indices: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,7 +303,17 @@ def _materialize_texture(
     temporary.parent.mkdir(parents=True, exist_ok=True)
     temporary.write_bytes(original)
     try:
-        decode_to_png(temporary, editable)
+        palette_index = context.masked_palette_indices.get(
+            Path(entry_name).name.casefold(),
+        )
+        if palette_index is None:
+            decode_to_png(temporary, editable)
+        else:
+            decode_to_png(
+                temporary,
+                editable,
+                transparent_palette_index=palette_index,
+            )
         return _texture_record(
             context.archive_root,
             editable,
@@ -319,6 +333,18 @@ def _materialize_texture(
         )
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def _masked_palette_indices(archive: PfsArchive) -> dict[str, int]:
+    masked: dict[str, int] = {}
+    for entry in archive.entries:
+        if Path(entry.name).suffix.casefold() != ".wld":
+            continue
+        try:
+            masked.update(masked_palette_indices(archive.read(entry.name)))
+        except UnicodeDecodeError, WldError:
+            continue
+    return masked
 
 
 def _extract_archive(
@@ -345,6 +371,7 @@ def _extract_archive(
         archive,
         archive_root,
         archive_root / ".working",
+        _masked_palette_indices(archive),
     )
     records: list[TextureRecord] = []
     try:
@@ -656,7 +683,12 @@ def _update_archive(
     archive_root = pack_root / relative_archive.with_suffix("")
     existing_records = _load_existing_records(archive_root / MANIFEST_NAME)
     working = archive_root / ".working"
-    context = _TextureContext(archive, archive_root, working)
+    context = _TextureContext(
+        archive,
+        archive_root,
+        working,
+        _masked_palette_indices(archive),
+    )
     records: list[TextureRecord] = []
     added_files: list[Path] = []
     refreshed_special = 0

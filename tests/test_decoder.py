@@ -87,6 +87,26 @@ def test_indexed_bmp_magenta_color_key_becomes_png_alpha() -> None:
             ]
 
 
+def test_indexed_bmp_uses_declared_transparent_palette_index() -> None:
+    """Apply WLD masked-material transparency to an ordinary palette color."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "source.bmp"
+        destination = root / "editable.png"
+        image = Image.new("P", (2, 1))
+        image.putpalette([106, 89, 39, 10, 20, 30] + [0, 0, 0] * 254)
+        image.putdata([0, 1])
+        image.save(source, format="BMP")
+
+        decode_to_png(source, destination, transparent_palette_index=0)
+
+        with Image.open(destination) as decoded:
+            assert list(decoded.convert("RGBA").get_flattened_data()) == [
+                (106, 89, 39, 0),
+                (10, 20, 30, 255),
+            ]
+
+
 def test_decode_failure_removes_partial_output_and_reports_pillow_error() -> None:
     """Remove partial output and report Pillow decode failures."""
     with tempfile.TemporaryDirectory() as temporary:

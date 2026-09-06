@@ -1,6 +1,6 @@
 [package]
 name = "ntero-native"
-version = "2026.9.601"
+version = "2026.9.604"
 edition = "2024"
 rust-version = "1.88"
 description = "Native texture encoder for NTERO"
